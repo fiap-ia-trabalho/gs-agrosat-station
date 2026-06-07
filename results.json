@@ -1,0 +1,32 @@
+{
+  "models": {
+    "random_forest": {
+      "r2": 0.9325,
+      "mae_sc_ha": 2.17
+    },
+    "gradient_boosting": {
+      "r2": 0.9242,
+      "mae_sc_ha": 2.45
+    },
+    "ensemble": {
+      "r2": 0.9299,
+      "mae_sc_ha": 2.3
+    }
+  },
+  "feature_importance": {
+    "ndvi_ma14": 0.0089,
+    "ndvi_ma30": 0.0026,
+    "ndvi_max": 0.0005,
+    "ndvi_std": 0.0055,
+    "vci": 0.96,
+    "water_stress": 0.0053,
+    "rain_30d": 0.0039,
+    "temp_ma7": 0.0045,
+    "gda_cumulative": 0.0026,
+    "thermal_ndvi_idx": 0.0024,
+    "uv_index": 0.0037
+  },
+  "current_prediction_sc_ha": 36.2,
+  "prediction_class": "BAIXO (<45 sc/ha)",
+  "timestamp": "2026-06-04T13:09:33.516707"
+}
