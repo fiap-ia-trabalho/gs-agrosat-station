@@ -1,20 +1,23 @@
+# FIAP - Faculdade de Informática e Administração Paulista
+
+<img width="2385" height="642" alt="image" src="https://github.com/user-attachments/assets/594c28cc-66ae-40ac-b8a6-8c39e6f14de4" />
+
 # 🛰️ AgroSat Intelligence
 ## Previsão de Safra com NDVI Satelital e Estação Meteorológica ESP32
 
 > **Global Solution 2026.1 — FIAP**  
-> Curso: Inteligência Artificial  
 > Tema: Economia Espacial — *"Como a IA pode transformar a nova economia espacial e gerar impacto positivo na Terra?"*
 
----
+## 👨‍🎓 Integrantes
+- [CAUAN OTTO RODRIGUES SOUSA (RM567940)](https://www.linkedin.com/in/cauanotto)
+- [FERNANDO A GURGEL (RM567606)](https://www.linkedin.com/in/fernando-gurgel-75aa8369)
+- [IRACI MONTEIRO SOUZA (RM567544)](https://www.linkedin.com/in/iraci-souza-bab42034)
+- [MARIA LUISA RODRIGUES NASCIMENTO (RM567659)](https://www.linkedin.com/in/malu-rodrigues-bb756b271)
+- [RAFAELA TORRES MARTINS (RM567735)](https://www.linkedin.com/in/rafaela-torres222)
 
-## 👥 Integrantes do Grupo
-
-| Nome Completo | RM | Turma |
-|---|---|---|
-| [Nome do Integrante 1] | RM XXXXX | [Turma] |
-| [Nome do Integrante 2] | RM XXXXX | [Turma] |
-| [Nome do Integrante 3] | RM XXXXX | [Turma] |
-| [Nome do Integrante 4] | RM XXXXX | [Turma] |
+## 👩‍🏫 Professores
+- **Tutor(a):** [ANA CRISTINA DOS SANTOS](https://www.linkedin.com/company/inova-fusca)
+- **Coordenador(a):** [ANDRÉ GODOI](https://www.linkedin.com/in/andregodoichiovato)
 
 ---
 
