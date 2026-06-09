@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroSat Intelligence — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+
+  * { box-sizing: border-box; }
+
+  body {
+
+    margin: 0; font-family: 'Segoe UI', Arial, sans-serif;
+
+    background: #0f1b13; color: #eaf3ec;
+
+  }
+
+  header {
+
+    background: linear-gradient(120deg, #14532d, #1f7a3d);
+
+    padding: 24px 32px;
+
+  }
+
+  header h1 { margin: 0; font-size: 26px; }
+
+  header p { margin: 4px 0 0; opacity: 0.85; font-size: 14px; }
+
+  .container { padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+
+  .card {
+
+    background: #16271b; border: 1px solid #25402c; border-radius: 10px;
+
+    padding: 18px 20px;
+
+  }
+
+  .card .label { font-size: 13px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .card .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+
+  .card .sub { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+
+  .badge.bom { background: #2f6f3e; color: #d4f3dc; }
+
+  .badge.medio { background: #8a6d1d; color: #fbeac0; }
+
+  .badge.baixo { background: #7a2c2c; color: #f6d3d3; }
+
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  @media (max-width: 880px) { .charts { grid-template-columns: 1fr; } }
+
+  .chart-box {
+
+    background: #16271b; border: 1px solid #25402c; border-radius: 10px; padding: 16px;
+
+  }
+
+  .chart-box h3 { margin: 0 0 12px; font-size: 16px; font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #25402c; }
+
+  th { opacity: 0.7; font-weight: 600; font-size: 12px; text-transform: uppercase; }
+
+  footer { text-align: center; padding: 20px; opacity: 0.6; font-size: 12px; }
+</style>
+</head>
+<body>
+ 
+<header>
+<h1>🛰️ AgroSat Intelligence — Painel de Previsão de Safra</h1>
+<p>Global Solution 2026.1 — FIAP · NDVI Satelital + Estação Meteorológica ESP32 · Cultura: Soja (RM região de Campinas/SP)</p>
+</header>
+ 
+<div class="container">
+ 
+  <div class="kpis" id="kpiRow"></div>
+ 
+  <div class="charts">
+<div class="chart-box">
+<h3>NDVI ao longo do ciclo da cultura</h3>
+<canvas id="ndviChart" height="220"></canvas>
+</div>
+<div class="chart-box">
+<h3>Temperatura média x Precipitação</h3>
+<canvas id="weatherChart" height="220"></canvas>
+</div>
+<div class="chart-box">
+<h3>Desempenho dos modelos (R² e MAE)</h3>
+<canvas id="modelChart" height="220"></canvas>
+</div>
+<div class="chart-box">
+<h3>Importância das variáveis (Random Forest)</h3>
+<canvas id="featChart" height="220"></canvas>
+</div>
+</div>
+ 
+  <div class="chart-box" style="margin-top:20px;">
+<h3>Amostra dos dados ingeridos (NDVI + clima, a cada 6 dias)</h3>
+<table id="sampleTable"></table>
+</div>
+ 
+</div>
+ 
+<footer>
+
+  Dashboard estático de demonstração (POC) — dados simulados representando ingestão via Sentinel-2/Landsat e estação ESP32 (DHT22, BMP280, UV, pluviômetro, anemômetro).
+
+  Em produção, os valores seriam consumidos em tempo real via API REST a partir do DynamoDB (AWS IoT Core → Lambda → DynamoDB).
+</footer>
+ 
+<script>
+
+// ───────────────────────────────────────────────────────────────────────────
+
+// Dados embutidos (amostra representativa gerada pelo pipeline ndvi_pipeline.py
+
+// e exportada em /output/*.csv e /output/results.json — ver README para
+
+// instruções de como regenerar com `python src/ndvi_pipeline.py`)
+
+// ───────────────────────────────────────────────────────────────────────────
+
+const sample = [
+
+  {date:"2025-09-01", ndvi:0.2149, temp:21.3, rain:12.3},
+
+  {date:"2025-09-07", ndvi:0.1195, temp:19.5, rain:0.0},
+
+  {date:"2025-09-13", ndvi:0.2694, temp:21.2, rain:0.8},
+
+  {date:"2025-09-19", ndvi:0.1353, temp:22.0, rain:0.0},
+
+  {date:"2025-09-25", ndvi:0.3536, temp:22.7, rain:0.0},
+
+  {date:"2025-10-01", ndvi:0.2635, temp:22.9, rain:0.0},
+
+  {date:"2025-10-07", ndvi:0.3513, temp:23.5, rain:0.0},
+
+  {date:"2025-10-13", ndvi:0.4047, temp:27.3, rain:4.2},
+
+  {date:"2025-10-19", ndvi:0.6293, temp:28.0, rain:0.0},
+
+  {date:"2025-10-25", ndvi:0.7066, temp:28.3, rain:0.0},
+
+  {date:"2025-10-31", ndvi:0.7121, temp:28.7, rain:0.4},
+
+  {date:"2025-11-06", ndvi:0.7678, temp:27.9, rain:0.0},
+
+  {date:"2025-11-12", ndvi:0.8038, temp:30.1, rain:0.4},
+
+  {date:"2025-11-18", ndvi:0.8331, temp:29.7, rain:4.1},
+
+  {date:"2025-11-24", ndvi:0.8212, temp:29.4, rain:0.0},
+
+  {date:"2025-11-30", ndvi:0.7029, temp:30.0, rain:0.0},
+
+  {date:"2025-12-06", ndvi:0.8526, temp:31.8, rain:0.0},
+
+  {date:"2025-12-12", ndvi:0.6665, temp:28.0, rain:0.4},
+
+  {date:"2025-12-18", ndvi:0.8075, temp:28.9, rain:0.0},
+
+  {date:"2025-12-24", ndvi:0.7575, temp:23.3, rain:0.0},
+
+  {date:"2025-12-30", ndvi:0.7422, temp:23.3, rain:0.0},
+
+  {date:"2026-01-05", ndvi:0.6369, temp:23.3, rain:0.0},
+
+  {date:"2026-01-11", ndvi:0.4273, temp:20.6, rain:0.0},
+
+  {date:"2026-01-17", ndvi:0.5722, temp:17.4, rain:0.0},
+
+  {date:"2026-01-23", ndvi:0.3422, temp:17.6, rain:0.0},
+
+  {date:"2026-01-29", ndvi:0.4286, temp:18.7, rain:0.0},
+
+  {date:"2026-02-04", ndvi:0.2660, temp:15.9, rain:0.0},
+
+  {date:"2026-02-10", ndvi:0.1884, temp:20.8, rain:2.6},
+
+  {date:"2026-02-16", ndvi:0.2473, temp:16.5, rain:0.0},
+
+  {date:"2026-02-22", ndvi:0.0752, temp:16.9, rain:0.0},
+
+];
+ 
+const results = {
+
+  models: {
+
+    random_forest:     {r2: 0.9325, mae_sc_ha: 2.17},
+
+    gradient_boosting: {r2: 0.9242, mae_sc_ha: 2.45},
+
+    ensemble:          {r2: 0.9299, mae_sc_ha: 2.30}
+
+  },
+
+  feature_importance: {
+
+    vci: 0.96, ndvi_ma14: 0.0089, ndvi_std: 0.0055, water_stress: 0.0053,
+
+    temp_ma7: 0.0045, rain_30d: 0.0039, uv_index: 0.0037,
+
+    ndvi_ma30: 0.0026, gda_cumulative: 0.0026, thermal_ndvi_idx: 0.0024, ndvi_max: 0.0005
+
+  },
+
+  current_prediction_sc_ha: 36.2,
+
+  prediction_class: "BAIXO (<45 sc/ha)"
+
+};
+ 
+// ─── KPI cards ───────────────────────────────────────────────────────────
+
+const classKey = results.prediction_class.toLowerCase().includes("bom") ? "bom"
+
+              : results.prediction_class.toLowerCase().includes("médio") ? "medio" : "baixo";
+
+const kpiRow = document.getElementById("kpiRow");
+
+kpiRow.innerHTML = `
+<div class="card">
+<div class="label">Previsão de produtividade</div>
+<div class="value">${results.current_prediction_sc_ha} sc/ha</div>
+<div class="sub"><span class="badge ${classKey}">${results.prediction_class}</span></div>
+</div>
+<div class="card">
+<div class="label">R² do ensemble</div>
+<div class="value">${results.models.ensemble.r2.toFixed(3)}</div>
+<div class="sub">MAE = ${results.models.ensemble.mae_sc_ha} sc/ha</div>
+</div>
+<div class="card">
+<div class="label">NDVI máximo observado</div>
+<div class="value">${Math.max(...sample.map(s => s.ndvi)).toFixed(2)}</div>
+<div class="sub">Pico de vigor vegetativo no ciclo</div>
+</div>
+<div class="card">
+<div class="label">Variável mais relevante</div>
+<div class="value">VCI</div>
+<div class="sub">96% de importância no Random Forest</div>
+</div>
+
+`;
+ 
+const dates = sample.map(s => s.date);
+
+const greenGrad = (ctx, color) => {
+
+  const g = ctx.createLinearGradient(0, 0, 0, 220);
+
+  g.addColorStop(0, color + "55");
+
+  g.addColorStop(1, color + "05");
+
+  return g;
+
+};
+ 
+// ─── NDVI chart ──────────────────────────────────────────────────────────
+
+new Chart(document.getElementById("ndviChart"), {
+
+  type: "line",
+
+  data: { labels: dates, datasets: [{
+
+    label: "NDVI", data: sample.map(s => s.ndvi),
+
+    borderColor: "#4ade80", backgroundColor: ctx => greenGrad(ctx.chart.ctx, "#4ade80"),
+
+    fill: true, tension: 0.35, pointRadius: 2
+
+  }]},
+
+  options: { responsive: true, scales: { y: { min: 0, max: 1, ticks: { color: "#cfe9d8" }, grid: { color: "#25402c" } },
+
+    x: { ticks: { color: "#cfe9d8", maxRotation: 60, minRotation: 60 }, grid: { display: false } } },
+
+    plugins: { legend: { labels: { color: "#eaf3ec" } } } }
+
+});
+ 
+// ─── Weather chart ───────────────────────────────────────────────────────
+
+new Chart(document.getElementById("weatherChart"), {
+
+  data: { labels: dates, datasets: [
+
+    { type: "bar", label: "Chuva (mm)", data: sample.map(s => s.rain), backgroundColor: "#3b82f6aa", yAxisID: "y1" },
+
+    { type: "line", label: "Temp. média (°C)", data: sample.map(s => s.temp), borderColor: "#fb923c", tension: 0.35, yAxisID: "y" }
+
+  ]},
+
+  options: { responsive: true,
+
+    scales: {
+
+      y:  { position: "left", ticks: { color: "#cfe9d8" }, grid: { color: "#25402c" } },
+
+      y1: { position: "right", ticks: { color: "#cfe9d8" }, grid: { display: false } },
+
+      x:  { ticks: { color: "#cfe9d8", maxRotation: 60, minRotation: 60 }, grid: { display: false } }
+
+    },
+
+    plugins: { legend: { labels: { color: "#eaf3ec" } } } }
+
+});
+ 
+// ─── Model performance chart ─────────────────────────────────────────────
+
+const modelNames = Object.keys(results.models);
+
+new Chart(document.getElementById("modelChart"), {
+
+  data: { labels: modelNames.map(m => m.replace("_", " ")), datasets: [
+
+    { type: "bar", label: "R²", data: modelNames.map(m => results.models[m].r2), backgroundColor: "#4ade80aa", yAxisID: "y" },
+
+    { type: "bar", label: "MAE (sc/ha)", data: modelNames.map(m => results.models[m].mae_sc_ha), backgroundColor: "#f87171aa", yAxisID: "y1" }
+
+  ]},
+
+  options: { responsive: true,
+
+    scales: {
+
+      y:  { position: "left", min: 0, max: 1, ticks: { color: "#cfe9d8" }, grid: { color: "#25402c" } },
+
+      y1: { position: "right", min: 0, max: 5, ticks: { color: "#cfe9d8" }, grid: { display: false } },
+
+      x:  { ticks: { color: "#cfe9d8" }, grid: { display: false } }
+
+    },
+
+    plugins: { legend: { labels: { color: "#eaf3ec" } } } }
+
+});
+ 
+// ─── Feature importance chart ────────────────────────────────────────────
+
+const feats = Object.entries(results.feature_importance).sort((a, b) => b[1] - a[1]).slice(0, 6);
+
+new Chart(document.getElementById("featChart"), {
+
+  type: "bar",
+
+  data: { labels: feats.map(f => f[0]), datasets: [{
+
+    label: "Importância", data: feats.map(f => f[1]),
+
+    backgroundColor: "#34d399aa"
+
+  }]},
+
+  options: { indexAxis: "y", responsive: true,
+
+    scales: { x: { ticks: { color: "#cfe9d8" }, grid: { color: "#25402c" } },
+
+              y: { ticks: { color: "#cfe9d8" }, grid: { display: false } } },
+
+    plugins: { legend: { display: false } } }
+
+});
+ 
+// ─── Sample table ────────────────────────────────────────────────────────
+
+const table = document.getElementById("sampleTable");
+
+let html = "<tr><th>Data</th><th>NDVI</th><th>Temp. (°C)</th><th>Chuva (mm)</th></tr>";
+
+sample.forEach(s => {
+
+  html += `<tr><td>${s.date}</td><td>${s.ndvi.toFixed(3)}</td><td>${s.temp.toFixed(1)}</td><td>${s.rain.toFixed(1)}</td></tr>`;
+
+});
+
+table.innerHTML = html;
+</script>
+ 
+</body>
+</html>
+ 
