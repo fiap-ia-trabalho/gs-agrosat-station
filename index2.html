@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgroSat Intelligence — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0C0E19;
+    --bg2:       #12152A;
+    --bg3:       #1A1E35;
+    --card:      #161929;
+    --border:    #252B44;
+    --orange:    #DE642A;
+    --orange2:   #F87315;
+    --cyan:      #09B6D5;
+    --cyan2:     #6AB4C2;
+    --green:     #16A34A;
+    --white:     #FFFFFF;
+    --muted:     #7B84A3;
+    --body:      #C8CFEA;
+    --red:       #D82C6D;
+  }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, #05060B 0%, #1A0A04 60%, #2A1008 100%);
+    border-bottom: 1px solid #2A1A0A;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 120% at 80% 50%, rgba(222,100,42,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--white);
+    white-space: nowrap;
+  }
+  .header-logo span { color: var(--orange); }
+  .header-divider { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+  .header-info { flex: 1; }
+  .header-info h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: 0.02em;
+  }
+  .header-info p {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .header-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--orange);
+    border: 1px solid rgba(222,100,42,0.4);
+    padding: 4px 12px;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  /* ── LAYOUT ──────────────────────────────────────────── */
+  .container {
+    padding: 28px 40px 40px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  /* ── KPIs ────────────────────────────────────────────── */
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 960px) { .kpis { grid-template-columns: repeat(2,1fr); } }
+
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    border-radius: 10px 0 0 10px;
+  }
+  .kpi-card.orange::after { background: var(--orange); }
+  .kpi-card.cyan::after   { background: var(--cyan); }
+  .kpi-card.green::after  { background: var(--green); }
+  .kpi-card.red::after    { background: var(--red); }
+
+  .kpi-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--white);
+  }
+  .kpi-value.orange { color: var(--orange); }
+  .kpi-value.cyan   { color: var(--cyan); }
+  .kpi-value.green  { color: var(--green); }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .badge.baixo { background: rgba(216,44,109,0.2); color: #F472B6; border: 1px solid rgba(216,44,109,0.4); }
+  .badge.medio { background: rgba(248,115,21,0.2); color: #FB923C; border: 1px solid rgba(248,115,21,0.4); }
+  .badge.bom   { background: rgba(22,163,74,0.2);  color: #4ADE80; border: 1px solid rgba(22,163,74,0.4); }
+
+  /* ── CHARTS GRID ─────────────────────────────────────── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 880px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .chart-box h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cyan2);
+    margin-bottom: 16px;
+  }
+
+  /* ── TABLE ───────────────────────────────────────────── */
+  .table-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .table-box h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cyan2);
+    margin-bottom: 16px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  tbody tr { border-bottom: 1px solid rgba(37,43,68,0.5); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 8px 12px; color: var(--body); font-size: 12px; }
+  tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .ndvi-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  /* ── FOOTER ──────────────────────────────────────────── */
+  footer {
+    text-align: center;
+    padding: 24px 40px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  footer strong { color: var(--orange); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">AGRO<span>SAT</span></div>
+  <div class="header-divider"></div>
+  <div class="header-info">
+    <h2>Painel de Previsão de Safra — Intelligence Dashboard</h2>
+    <p>Global Solution 2026.1 · FIAP · NDVI Satelital + Estação Meteorológica ESP32 · Cultura: Soja — Região Campinas/SP</p>
+  </div>
+  <div class="header-badge">🛰 POC 2026</div>
+</header>
+
+<div class="container">
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpiRow"></div>
+
+  <!-- Charts 2x2 -->
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>NDVI ao longo do ciclo da cultura</h3>
+      <canvas id="ndviChart" height="210"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Temperatura média × Precipitação</h3>
+      <canvas id="weatherChart" height="210"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Desempenho dos modelos — R² e MAE</h3>
+      <canvas id="modelChart" height="210"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>Importância das variáveis (Random Forest)</h3>
+      <canvas id="featChart" height="210"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="table-box">
+    <h3>Amostra dos dados ingeridos (NDVI + Clima — a cada 6 dias)</h3>
+    <table id="sampleTable"></table>
+  </div>
+
+</div>
+
+<footer>
+  Dashboard estático de demonstração (POC) — dados simulados representando ingestão via <strong>Sentinel-2/Landsat</strong> e estação <strong>ESP32</strong> (DHT22, BMP280, UV, pluviômetro, anemômetro).<br>
+  Em produção, os valores seriam consumidos em tempo real via API REST a partir do DynamoDB (<strong>AWS IoT Core → Lambda → DynamoDB</strong>).
+</footer>
+
+<script>
+// ── Dados (gerados por ndvi_pipeline.py) ────────────────────────────
+const sample = [
+  {date:"2025-09-01", ndvi:0.2149, temp:21.3, rain:12.3},
+  {date:"2025-09-07", ndvi:0.1195, temp:19.5, rain:0.0},
+  {date:"2025-09-13", ndvi:0.2694, temp:21.2, rain:0.8},
+  {date:"2025-09-19", ndvi:0.1353, temp:22.0, rain:0.0},
+  {date:"2025-09-25", ndvi:0.3536, temp:22.7, rain:0.0},
+  {date:"2025-10-01", ndvi:0.2635, temp:22.9, rain:0.0},
+  {date:"2025-10-07", ndvi:0.3513, temp:23.5, rain:0.0},
+  {date:"2025-10-13", ndvi:0.4047, temp:27.3, rain:4.2},
+  {date:"2025-10-19", ndvi:0.6293, temp:28.0, rain:0.0},
+  {date:"2025-10-25", ndvi:0.7066, temp:28.3, rain:0.0},
+  {date:"2025-10-31", ndvi:0.7121, temp:28.7, rain:0.4},
+  {date:"2025-11-06", ndvi:0.7678, temp:27.9, rain:0.0},
+  {date:"2025-11-12", ndvi:0.8038, temp:30.1, rain:0.4},
+  {date:"2025-11-18", ndvi:0.8331, temp:29.7, rain:4.1},
+  {date:"2025-11-24", ndvi:0.8212, temp:29.4, rain:0.0},
+  {date:"2025-11-30", ndvi:0.7029, temp:30.0, rain:0.0},
+  {date:"2025-12-06", ndvi:0.8526, temp:31.8, rain:0.0},
+  {date:"2025-12-12", ndvi:0.6665, temp:28.0, rain:0.4},
+  {date:"2025-12-18", ndvi:0.8075, temp:28.9, rain:0.0},
+  {date:"2025-12-24", ndvi:0.7575, temp:23.3, rain:0.0},
+  {date:"2025-12-30", ndvi:0.7422, temp:23.3, rain:0.0},
+  {date:"2026-01-05", ndvi:0.6369, temp:23.3, rain:0.0},
+  {date:"2026-01-11", ndvi:0.4273, temp:20.6, rain:0.0},
+  {date:"2026-01-17", ndvi:0.5722, temp:17.4, rain:0.0},
+  {date:"2026-01-23", ndvi:0.3422, temp:17.6, rain:0.0},
+  {date:"2026-01-29", ndvi:0.4286, temp:18.7, rain:0.0},
+  {date:"2026-02-04", ndvi:0.2660, temp:15.9, rain:0.0},
+  {date:"2026-02-10", ndvi:0.1884, temp:20.8, rain:2.6},
+  {date:"2026-02-16", ndvi:0.2473, temp:16.5, rain:0.0},
+  {date:"2026-02-22", ndvi:0.0752, temp:16.9, rain:0.0},
+];
+
+const results = {
+  models: {
+    random_forest:     {r2: 0.9325, mae_sc_ha: 2.17},
+    gradient_boosting: {r2: 0.9242, mae_sc_ha: 2.45},
+    ensemble:          {r2: 0.9299, mae_sc_ha: 2.30}
+  },
+  feature_importance: {
+    vci: 0.96, ndvi_ma14: 0.0089, ndvi_std: 0.0055, water_stress: 0.0053,
+    temp_ma7: 0.0045, rain_30d: 0.0039, uv_index: 0.0037,
+    ndvi_ma30: 0.0026, gda_cumulative: 0.0026, thermal_ndvi_idx: 0.0024
+  },
+  current_prediction_sc_ha: 36.2,
+  prediction_class: "BAIXO (<45 sc/ha)"
+};
+
+// ── Defaults Chart.js (tema espacial) ───────────────────────────────
+Chart.defaults.color = '#7B84A3';
+Chart.defaults.font.family = "'Montserrat', sans-serif";
+Chart.defaults.font.size = 11;
+
+// Rótulos encurtados para eixo X (mês/dia)
+const shortDates = sample.map(s => {
+  const [y, m, d] = s.date.split('-');
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${months[+m-1]}/${d}`;
+});
+
+const gridColor  = 'rgba(37,43,68,0.8)';
+const tickColor  = '#7B84A3';
+
+// Plugin global para rótulos de dados personalizados
+const dataLabelPlugin = {
+  id: 'customLabels',
+  afterDatasetsDraw(chart) {} // usando datalabels nativo abaixo
+};
+
+// ── KPI cards ────────────────────────────────────────────────────────
+const classKey = results.prediction_class.toLowerCase().includes('bom') ? 'bom'
+               : results.prediction_class.toLowerCase().includes('médio') ? 'medio' : 'baixo';
+
+document.getElementById('kpiRow').innerHTML = `
+<div class="kpi-card orange">
+  <div class="kpi-label">Previsão de Produtividade</div>
+  <div class="kpi-value orange">${results.current_prediction_sc_ha}</div>
+  <div class="kpi-sub">sacas/ha · <span class="badge ${classKey}">${results.prediction_class}</span></div>
+</div>
+<div class="kpi-card cyan">
+  <div class="kpi-label">R² do Ensemble</div>
+  <div class="kpi-value cyan">${results.models.ensemble.r2.toFixed(3)}</div>
+  <div class="kpi-sub">MAE = ${results.models.ensemble.mae_sc_ha} sc/ha</div>
+</div>
+<div class="kpi-card green">
+  <div class="kpi-label">NDVI Máximo Observado</div>
+  <div class="kpi-value" style="color:#4ADE80">${Math.max(...sample.map(s => s.ndvi)).toFixed(3)}</div>
+  <div class="kpi-sub">Pico de vigor vegetativo no ciclo</div>
+</div>
+<div class="kpi-card" style="--accent:#D82C6D">
+  <div class="kpi-label">Variável Mais Relevante</div>
+  <div class="kpi-value" style="color:#F472B6">VCI</div>
+  <div class="kpi-sub">96% de importância — dados NDVI satelitais</div>
+</div>
+`;
+document.querySelector('.kpi-card:last-child::after');
+
+// ── 1. NDVI chart ─────────────────────────────────────────────────
+new Chart(document.getElementById('ndviChart'), {
+  type: 'line',
+  data: {
+    labels: shortDates,
+    datasets: [{
+      label: 'NDVI',
+      data: sample.map(s => s.ndvi),
+      borderColor: '#DE642A',
+      backgroundColor: ctx => {
+        const g = ctx.chart.ctx.createLinearGradient(0,0,0,210);
+        g.addColorStop(0, 'rgba(222,100,42,0.35)');
+        g.addColorStop(1, 'rgba(222,100,42,0.02)');
+        return g;
+      },
+      fill: true,
+      tension: 0.38,
+      pointRadius: 3,
+      pointBackgroundColor: '#DE642A',
+      pointBorderColor: '#0C0E19',
+      pointBorderWidth: 1.5,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#C8CFEA', boxWidth: 12 } },
+      tooltip: {
+        backgroundColor: '#1A1E35',
+        titleColor: '#DE642A',
+        bodyColor: '#C8CFEA',
+        borderColor: '#252B44',
+        borderWidth: 1,
+        callbacks: {
+          label: ctx => ` NDVI: ${ctx.parsed.y.toFixed(4)}`
+        }
+      },
+      datalabels: false,
+    },
+    scales: {
+      y: {
+        min: 0, max: 1,
+        grid: { color: gridColor },
+        ticks: {
+          color: tickColor,
+          callback: v => v.toFixed(1)
+        },
+        title: { display: true, text: 'NDVI', color: tickColor, font: { size: 10 } }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: tickColor, maxRotation: 55, minRotation: 55, font: { size: 9 } }
+      }
+    }
+  },
+  plugins: [{
+    // Rótulo do ponto máximo
+    afterDraw(chart) {
+      const ds = chart.data.datasets[0];
+      const maxVal = Math.max(...ds.data);
+      const maxIdx = ds.data.indexOf(maxVal);
+      const meta = chart.getDatasetMeta(0);
+      const pt = meta.data[maxIdx];
+      if (!pt) return;
+      const ctx = chart.ctx;
+      ctx.save();
+      ctx.fillStyle = '#DE642A';
+      ctx.font = 'bold 11px Montserrat,Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(`PICO ${maxVal.toFixed(3)}`, pt.x, pt.y - 10);
+      ctx.restore();
+    }
+  }]
+});
+
+// ── 2. Weather chart ──────────────────────────────────────────────
+new Chart(document.getElementById('weatherChart'), {
+  data: {
+    labels: shortDates,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Chuva (mm)',
+        data: sample.map(s => s.rain),
+        backgroundColor: 'rgba(9,182,213,0.5)',
+        borderColor: 'rgba(9,182,213,0.8)',
+        borderWidth: 1,
+        yAxisID: 'yRain',
+        datalabels: { display: false }
+      },
+      {
+        type: 'line',
+        label: 'Temp. média (°C)',
+        data: sample.map(s => s.temp),
+        borderColor: '#F87315',
+        backgroundColor: 'transparent',
+        tension: 0.38,
+        pointRadius: 3,
+        pointBackgroundColor: '#F87315',
+        pointBorderColor: '#0C0E19',
+        pointBorderWidth: 1.5,
+        yAxisID: 'yTemp',
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#C8CFEA', boxWidth: 12 } },
+      tooltip: {
+        backgroundColor: '#1A1E35',
+        titleColor: '#09B6D5',
+        bodyColor: '#C8CFEA',
+        borderColor: '#252B44',
+        borderWidth: 1,
+      }
+    },
+    scales: {
+      yTemp: {
+        position: 'left',
+        grid: { color: gridColor },
+        ticks: { color: '#F87315', callback: v => v + '°C' },
+        title: { display: true, text: 'Temperatura (°C)', color: '#F87315', font: { size: 10 } }
+      },
+      yRain: {
+        position: 'right',
+        grid: { display: false },
+        ticks: { color: '#09B6D5', callback: v => v + 'mm' },
+        title: { display: true, text: 'Chuva (mm)', color: '#09B6D5', font: { size: 10 } }
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: tickColor, maxRotation: 55, minRotation: 55, font: { size: 9 } }
+      }
+    }
+  },
+  plugins: [{
+    // Rótulos nas barras de chuva com valor > 0
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const rainMeta = chart.getDatasetMeta(0);
+      chart.data.datasets[0].data.forEach((val, i) => {
+        if (val <= 0) return;
+        const bar = rainMeta.data[i];
+        ctx.save();
+        ctx.fillStyle = '#09B6D5';
+        ctx.font = 'bold 10px Montserrat,Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(val.toFixed(1), bar.x, bar.y - 5);
+        ctx.restore();
+      });
+      // Rótulos na linha de temperatura (a cada 5 pontos)
+      const tempMeta = chart.getDatasetMeta(1);
+      chart.data.datasets[1].data.forEach((val, i) => {
+        if (i % 5 !== 0) return;
+        const pt = tempMeta.data[i];
+        ctx.save();
+        ctx.fillStyle = '#F87315';
+        ctx.font = 'bold 10px Montserrat,Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(val.toFixed(1) + '°', pt.x, pt.y - 9);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+// ── 3. Model comparison ───────────────────────────────────────────
+const modelKeys   = Object.keys(results.models);
+const modelLabels = ['Random Forest', 'Gradient Boosting', 'Ensemble'];
+const r2Data  = modelKeys.map(m => results.models[m].r2);
+const maeData = modelKeys.map(m => results.models[m].mae_sc_ha);
+
+new Chart(document.getElementById('modelChart'), {
+  data: {
+    labels: modelLabels,
+    datasets: [
+      {
+        type: 'bar',
+        label: 'R²',
+        data: r2Data,
+        backgroundColor: ['rgba(222,100,42,0.7)', 'rgba(9,182,213,0.7)', 'rgba(22,163,74,0.7)'],
+        borderColor:     ['#DE642A', '#09B6D5', '#16A34A'],
+        borderWidth: 1.5,
+        yAxisID: 'yR2',
+        barPercentage: 0.5,
+        categoryPercentage: 0.6,
+      },
+      {
+        type: 'bar',
+        label: 'MAE (sc/ha)',
+        data: maeData,
+        backgroundColor: ['rgba(222,100,42,0.25)', 'rgba(9,182,213,0.25)', 'rgba(22,163,74,0.25)'],
+        borderColor:     ['#DE642A', '#09B6D5', '#16A34A'],
+        borderWidth: 1,
+        borderDash: [4,3],
+        yAxisID: 'yMAE',
+        barPercentage: 0.5,
+        categoryPercentage: 0.6,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: '#C8CFEA', boxWidth: 12 } },
+      tooltip: {
+        backgroundColor: '#1A1E35',
+        titleColor: '#C8CFEA',
+        bodyColor: '#C8CFEA',
+        borderColor: '#252B44',
+        borderWidth: 1,
+      }
+    },
+    scales: {
+      yR2:  { position: 'left',  min: 0.90, max: 0.945, grid: { color: gridColor }, ticks: { color: tickColor, callback: v => v.toFixed(3) }, title: { display:true, text:'R²', color: tickColor, font:{size:10} } },
+      yMAE: { position: 'right', min: 0, max: 3.5, grid: { display:false }, ticks: { color: tickColor, callback: v => v.toFixed(2) }, title: { display:true, text:'MAE (sc/ha)', color: tickColor, font:{size:10} } },
+      x: { grid: { display: false }, ticks: { color: tickColor } }
+    }
+  },
+  plugins: [{
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      // Rótulos R²
+      const meta0 = chart.getDatasetMeta(0);
+      r2Data.forEach((val, i) => {
+        const bar = meta0.data[i];
+        ctx.save();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 11px Montserrat,Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(val.toFixed(3), bar.x - 10, bar.y - 6);
+        ctx.restore();
+      });
+      // Rótulos MAE
+      const meta1 = chart.getDatasetMeta(1);
+      maeData.forEach((val, i) => {
+        const bar = meta1.data[i];
+        ctx.save();
+        ctx.fillStyle = '#C8CFEA';
+        ctx.font = '10px Montserrat,Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(val.toFixed(2), bar.x + 10, bar.y - 6);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+// ── 4. Feature importance ─────────────────────────────────────────
+const feats = Object.entries(results.feature_importance)
+  .sort((a,b) => b[1]-a[1])
+  .slice(0,7);
+
+const featColors = [
+  'rgba(222,100,42,0.85)',
+  'rgba(248,115,21,0.75)',
+  'rgba(9,182,213,0.70)',
+  'rgba(106,180,194,0.65)',
+  'rgba(22,163,74,0.65)',
+  'rgba(216,44,109,0.60)',
+  'rgba(37,91,190,0.60)',
+];
+
+new Chart(document.getElementById('featChart'), {
+  type: 'bar',
+  data: {
+    labels: feats.map(f => f[0]),
+    datasets: [{
+      label: 'Importância',
+      data: feats.map(f => +(f[1]*100).toFixed(2)),
+      backgroundColor: featColors,
+      borderColor: featColors.map(c => c.replace(/[\d.]+\)$/, '1)')),
+      borderWidth: 1,
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#1A1E35',
+        titleColor: '#DE642A',
+        bodyColor: '#C8CFEA',
+        borderColor: '#252B44',
+        borderWidth: 1,
+        callbacks: { label: ctx => ` ${ctx.parsed.x.toFixed(2)}%` }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: gridColor },
+        ticks: { color: tickColor, callback: v => v + '%' },
+        title: { display: true, text: 'Importância (%)', color: tickColor, font: { size: 10 } }
+      },
+      y: {
+        grid: { display: false },
+        ticks: { color: '#C8CFEA', font: { size: 11, weight: '600' } }
+      }
+    }
+  },
+  plugins: [{
+    afterDraw(chart) {
+      const ctx = chart.ctx;
+      const meta = chart.getDatasetMeta(0);
+      feats.forEach(([,val], i) => {
+        const bar = meta.data[i];
+        const pct = (val*100).toFixed(val >= 0.1 ? 1 : 2);
+        ctx.save();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 11px Montserrat,Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(pct + '%', bar.x + 6, bar.y + 4);
+        ctx.restore();
+      });
+    }
+  }]
+});
+
+// ── Tabela ────────────────────────────────────────────────────────
+function ndviColor(v) {
+  if (v >= 0.7) return { bg:'rgba(22,163,74,0.2)',  color:'#4ADE80' };
+  if (v >= 0.5) return { bg:'rgba(101,163,13,0.2)', color:'#A3E635' };
+  if (v >= 0.3) return { bg:'rgba(248,115,21,0.2)', color:'#FB923C' };
+  return { bg:'rgba(216,44,109,0.15)', color:'#F472B6' };
+}
+
+const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let tableHtml = `<thead><tr>
+  <th>Data</th><th>NDVI</th><th>Status NDVI</th>
+  <th>Temp. (°C)</th><th>Chuva (mm)</th>
+</tr></thead><tbody>`;
+
+sample.forEach(s => {
+  const [y,m,d] = s.date.split('-');
+  const label = `${months[+m-1]}/${d}/${y}`;
+  const c = ndviColor(s.ndvi);
+  const status = s.ndvi >= 0.7 ? 'Densa/Saudável'
+               : s.ndvi >= 0.5 ? 'Moderada'
+               : s.ndvi >= 0.3 ? 'Esparsa'
+               : 'Baixa/Estresse';
+  tableHtml += `<tr>
+    <td>${label}</td>
+    <td><span class="ndvi-pill" style="background:${c.bg};color:${c.color}">${s.ndvi.toFixed(4)}</span></td>
+    <td style="color:${c.color};font-size:11px;font-weight:600">${status}</td>
+    <td>${s.temp.toFixed(1)}</td>
+    <td>${s.rain > 0 ? '<span style="color:#09B6D5;font-weight:600">'+s.rain.toFixed(1)+'</span>' : '<span style="color:#7B84A3">—</span>'}</td>
+  </tr>`;
+});
+tableHtml += '</tbody>';
+document.getElementById('sampleTable').innerHTML = tableHtml;
+</script>
+</body>
+</html>
