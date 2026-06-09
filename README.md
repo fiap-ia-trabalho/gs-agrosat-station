@@ -78,6 +78,7 @@ agrosat-intelligence/
 │
 ├── README.md                          # Este arquivo
 ├── requirements.txt                   # Dependências Python
+├── Agrosat - Slides.pptx              # Apresentação
 │
 ├── src/
 │   ├── ndvi_pipeline.py               # Pipeline principal de ML
