@@ -9,7 +9,6 @@ Pipeline principal de ingestão, processamento e predição de safra
 utilizando dados NDVI de satélite e dados meteorológicos (simulando
 estação ESP32 inspirada em satélites).
 
-Autores: [Nome do Grupo]
 """
 
 import numpy as np
