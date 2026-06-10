@@ -91,7 +91,6 @@ agrosat-intelligence/
 │   └── index.html                     # Dashboard web interativo
 │
 ├── docs/
-│   ├── arquitetura.png                # Diagrama de arquitetura
 │   └── AgroSat_GS2026.pdf            # Documentação completa
 │
 └── output/                            # Resultados do pipeline (gerado)
